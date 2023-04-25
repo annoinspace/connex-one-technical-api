@@ -6,7 +6,13 @@ import createHttpError from "http-errors"
 
 const timeRouter = express.Router()
 
-timeRouter.use(prometheusMiddleware())
+const metricsMiddleware = prometheusMiddleware({
+  metricsPath: "/metrics",
+  collectDefaultMetrics: true,
+  requestDurationBuckets: [0.1, 0.5, 1, 1.5]
+})
+
+timeRouter.use(metricsMiddleware)
 
 //middleware to check if the authorization header is mysecrettoken
 const checkAuthorizationHeader = (req, res, next) => {
