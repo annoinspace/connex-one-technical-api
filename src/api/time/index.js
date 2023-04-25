@@ -1,9 +1,12 @@
 import express from "express"
 import { validate } from "jsonschema"
 import { timeSchema } from "./model.js" //keeping the schema separate
+import prometheusMiddleware from "express-prometheus-middleware"
 import createHttpError from "http-errors"
 
 const timeRouter = express.Router()
+
+timeRouter.use(prometheusMiddleware())
 
 //middleware to check if the authorization header is mysecrettoken
 const checkAuthorizationHeader = (req, res, next) => {
@@ -26,6 +29,15 @@ timeRouter.get("/time", checkAuthorizationHeader, async (req, res, next) => {
     } else {
       res.status(500).json({ error: "Invalid response schema" })
     }
+  } catch (error) {
+    next(error)
+  }
+})
+
+timeRouter.get("/metrics", checkAuthorizationHeader, async (req, res, next) => {
+  try {
+    // This endpoint will serve Prometheus-format metrics, nothing more to see here
+    console.log("Prometheus-format metrics requested")
   } catch (error) {
     next(error)
   }
