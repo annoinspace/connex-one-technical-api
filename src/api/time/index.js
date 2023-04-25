@@ -1,29 +1,9 @@
 import express from "express"
 import { validate } from "jsonschema"
 import { timeSchema } from "./model.js" //keeping the schema separate
-import prometheusMiddleware from "express-prometheus-middleware"
-import createHttpError from "http-errors"
+import { checkAuthorizationHeader, metricsMiddleware } from "./tools.js" // importing middleware
 
 const timeRouter = express.Router()
-
-const metricsMiddleware = prometheusMiddleware({
-  metricsPath: "/metrics",
-  collectDefaultMetrics: true,
-  requestDurationBuckets: [0.1, 0.5, 1, 1.5]
-})
-
-timeRouter.use(metricsMiddleware)
-
-//middleware to check if the authorization header is mysecrettoken
-const checkAuthorizationHeader = (req, res, next) => {
-  const token = req.headers.authorization
-  if (token !== "mysecrettoken") {
-    // using the http-errors package to handle creating errors
-    next(createHttpError(403, `Invalid or missing authorization token`))
-  } else {
-    next()
-  }
-}
 
 timeRouter.get("/time", checkAuthorizationHeader, async (req, res, next) => {
   try {
@@ -40,9 +20,9 @@ timeRouter.get("/time", checkAuthorizationHeader, async (req, res, next) => {
   }
 })
 
-timeRouter.get("/metrics", checkAuthorizationHeader, async (req, res, next) => {
+timeRouter.get("/metrics", checkAuthorizationHeader, metricsMiddleware, async (req, res, next) => {
   try {
-    // This endpoint will serve Prometheus-format metrics, nothing more to see here
+    //nothing more to see here as the express-prometheus-middleware does all the work
     console.log("Prometheus-format metrics requested")
   } catch (error) {
     next(error)
